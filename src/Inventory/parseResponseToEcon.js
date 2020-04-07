@@ -2,7 +2,7 @@ module.exports = function ({ assets, descriptions }) {
 	const inventory = [];
 	for (let i = 0; i < Object.keys(assets).length; i++) {
 		const assetID = Object.keys(assets)[i];
-		const item = assets[assetID].classid;
+		const item = assets[assetID];
 
 		const classID = item.classid;
 		const instanceID = item.instanceid;
