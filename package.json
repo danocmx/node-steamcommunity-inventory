@@ -1,0 +1,25 @@
+{
+  "name": "steamcommunity-inventory",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/Inventory",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "steam",
+    "steamcommunity",
+    "inventory"
+  ],
+  "author": "danocmx",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "bottleneck": "^2.19.5"
+  }
+}
