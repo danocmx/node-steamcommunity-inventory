@@ -1,8 +1,7 @@
 const axios = require('axios');
 const Bottleneck = require('bottleneck');
 
-const parseOldResponseToEcon = require('./Inventory/parseOldResponseToEcon');
-const parseNewResponseToEcon = require('./Inventory/parseNewResponseToEcon');
+const Parser = require('./Inventory/Parser');
 
 const isRateLimited = require('./Inventory/isRateLimited');
 
@@ -40,6 +39,8 @@ class Inventory {
 		this.steamID = steamID;
 		this.method = method;
 		this.formatter = formatter;
+
+		this.parser = new Parser(this);
 
 		this.headers = headers;
 		if (cookies) this.setCookies(cookies);
@@ -129,7 +130,7 @@ class Inventory {
 				}
 
 				inventory.push(
-					...parseOldResponseToEcon({
+					...this.parser.toEconOld({
 						assets: data.rgInventory,
 						descriptions: data.rgDescriptions,
 						formatter: this.formatter,
@@ -185,7 +186,7 @@ class Inventory {
 					);
 				}
 
-				return parseNewResponseToEcon({
+				return this.parser.toEconNew({
 					assets: data.assets,
 					descriptions: data.descriptions,
 					formatter: this.formatter,
