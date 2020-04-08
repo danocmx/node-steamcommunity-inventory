@@ -110,11 +110,11 @@ class Inventory {
 			.get(
 				url,
 				{
+					...this.getHeaders(),
 					data: {
 						start,
 						trading: tradableOnly ? 1 : 0,
 					},
-					...this.getCookies(),
 					transformData: [function (data) {
 						inventory.push(
 							parseResponseToEcon({
@@ -165,10 +165,10 @@ class Inventory {
 			.get(
 				url,
 				{
+					...this.getHeaders(),
 					data: {
 						l: language,
 					},
-					...this.getCookies(),
 				},
 			)
 			.then(({ data }) => parseResponseToEcon({
