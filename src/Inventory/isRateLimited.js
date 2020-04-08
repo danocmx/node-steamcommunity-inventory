@@ -4,7 +4,7 @@
  * @param {boolean}
  */
 module.exports = function (inventory, steamID) {
-	return isRateLimitedSteamID(inventory, steamID) || !inventory.cookies.isLoggedIn();
+	return isRateLimitedSteamID(inventory, steamID) || !inventory.cookies;
 };
 
 function isRateLimitedSteamID(inventory, steamID) {

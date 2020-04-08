@@ -40,11 +40,10 @@ class Inventory {
 		this.method = method;
 		this.formatter = formatter;
 
-		this.cookies = cookies;
+		this.headers = headers;
+		if (cookies) this.setCookies(cookies);
 
-		this.request = axios.create({
-			headers,
-		});
+		this.request = axios.create();
 
 		this.limiter = new Bottleneck({
 			maxConcurent,
@@ -53,6 +52,16 @@ class Inventory {
 			reservoirRefreshInverval,
 			reservoirRefreshAmount,
 		});
+	}
+
+	/**
+	 * Sets cookies to instance
+	 * NOTE: Current version only accepts cookies in for like
+	 * 	@see https://github.com/DoctorMcKay/node-steam-user#websession
+	 * @param {string[]} cookies
+	 */
+	setCookies(cookies) {
+		this.cookies = cookies.join('; ');
 	}
 
 	/**
@@ -105,6 +114,7 @@ class Inventory {
 						start,
 						trading: tradableOnly ? 1 : 0,
 					},
+					...this.getCookies(),
 					transformData: [function (data) {
 						inventory.push(
 							parseResponseToEcon({
@@ -157,9 +167,24 @@ class Inventory {
 					data: {
 						l: language,
 					},
+					...this.getCookies(),
 				},
 			)
 			.then(({ data }) => parseResponseToEcon(data));
+	}
+
+	/**
+	 * Returns cookies in object for iterators.
+	 * @return {Object}
+	 */
+	getHeaders() {
+		const { headers = {}, cookies } = this;
+
+		return {
+			...headers,
+			// Adds cookies property only if we have 'em
+			...(cookies ? { Cookie: cookies } : {}),
+		};
 	}
 }
 
