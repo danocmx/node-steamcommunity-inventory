@@ -120,6 +120,7 @@ class Inventory {
 							parseResponseToEcon({
 								assets: data.rgInventory,
 								descriptions: data.rgDescriptions,
+								formatter: this.formatter,
 							}),
 						);
 
@@ -170,7 +171,11 @@ class Inventory {
 					...this.getCookies(),
 				},
 			)
-			.then(({ data }) => parseResponseToEcon(data));
+			.then(({ data }) => parseResponseToEcon({
+				assets: data.assets,
+				descriptions: data.descriptions,
+				formatter: this.formatter,
+			}));
 	}
 
 	/**
