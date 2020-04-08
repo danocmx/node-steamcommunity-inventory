@@ -1,9 +1,10 @@
 const axios = require('axios');
 const Bottleneck = require('bottleneck');
 
-const isRateLimited = require('./Inventory/isRateLimited');
-const parseResponseToEcon = require('./Inventory/parseResponseToEcon');
+const parseOldResponseToEcon = require('./Inventory/parseOldResponseToEcon');
+const parseNewResponseToEcon = require('./Inventory/parseNewResponseToEcon');
 
+const isRateLimited = require('./Inventory/isRateLimited');
 
 /**
  * @constant
@@ -24,7 +25,7 @@ class Inventory {
 	 * @param {number} options.reservoirRefreshAmount @see https://github.com/SGrondin/bottleneck#constructor
 	 * @param {number} options.reservoirRefreshInverval @see https://github.com/SGrondin/bottleneck#constructor
 	 * @param {'new'|'old'} options.method method we use for inventory
-	 * @param {Function} options.formatter method that formats the inventory
+	 * @param {Function} options.formatter modifies econItem before being passed into then
 	 * @param {Object} [headers]
 	 */
 	constructor(options = {}) {
@@ -98,9 +99,9 @@ class Inventory {
 	 * @param {string} steamID
 	 * @param {string} appID
 	 * @param {string} contextID
-	 * @param {number} start From which item do we start.
-	 * @param {boolean} tradableOnly
-	 * @param {Object[]} inventory Only if you wanna append more items to it. Used for recursive.
+	 * @param {number} [start] From which item do we start.
+	 * @param {boolean} [tradableOnly=true]
+	 * @param {Object[]} [inventory=[]] Only if you wanna append more items to it. Used for recursive.
 	 * @return {Promise<EconItem[]>}
 	 */
 	getViaOldEndpoint({ steamID, appID, contextID, start = 0, tradableOnly = true, inventory = [] }) {
@@ -111,26 +112,29 @@ class Inventory {
 				url,
 				{
 					...this.getHeaders(),
-					data: {
+					params: {
 						start,
 						trading: tradableOnly ? 1 : 0,
 					},
-					transformData: [function (data) {
-						inventory.push(
-							parseResponseToEcon({
-								assets: data.rgInventory,
-								descriptions: data.rgDescriptions,
-								formatter: this.formatter,
-							}),
-						);
-
-						// For recursion
-						return { more: data.more, moreStart: data.more_start };
-					}],
 				},
 			)
 			.then(({ data }) => {
-				const { more, moreStart } = data;
+				if (!data.success) {
+					return Promise.reject(
+						new Error(`Unsuccessful request, ${data.message}`),
+					);
+				}
+
+				inventory.push(
+					...parseOldResponseToEcon({
+						assets: data.rgInventory,
+						descriptions: data.rgDescriptions,
+						formatter: this.formatter,
+					}),
+				);
+
+				const { more } = data;
+				const moreStart = data.more_start;
 
 				if (more) {
 					// `priority` is now higher so recursive function is prefered.
@@ -155,7 +159,7 @@ class Inventory {
 	 * @param {string} steamID
 	 * @param {string} appID
 	 * @param {string} contextID
-	 * @param {string} language
+	 * @param {string} [language=english]
 	 * @return {Promise<EconItem[]>}
 	 */
 	getViaNewEndpoint({ steamID, appID, contextID, language = 'english' }) {
@@ -166,16 +170,24 @@ class Inventory {
 				url,
 				{
 					...this.getHeaders(),
-					data: {
+					params: {
 						l: language,
 					},
 				},
 			)
-			.then(({ data }) => parseResponseToEcon({
-				assets: data.assets,
-				descriptions: data.descriptions,
-				formatter: this.formatter,
-			}));
+			.then(({ data }) => {
+				if (data.success !== 1) {
+					return Promise.reject(
+						new Error(`Unsuccessful request, ${data.message}`),
+					);
+				}
+
+				return parseNewResponseToEcon({
+					assets: data.assets,
+					descriptions: data.descriptions,
+					formatter: this.formatter,
+				});
+			});
 	}
 
 	/**
