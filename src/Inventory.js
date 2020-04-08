@@ -1,38 +1,87 @@
-/* eslint-disable */
-const bottleneck = require('bottleneck');
+const axios = require('axios');
+const Bottleneck = require('bottleneck');
 
+const isRateLimited = require('./Inventory/isRateLimited');
 const parseResponseToEcon = require('./Inventory/parseResponseToEcon');
+
+
+/**
+ * @constant
+ */
+const DAY_IN_MILISECONDS = 24 * 60 * 60 * 1000;
+const SECOND_IN_MILISECONDS = 1000;
 
 /**
  * Handles inventory requests to SteamCommunity.
  */
 class Inventory {
 	/**
-	 * @param {string} options.steamID
-	 * @param {number} options.timeout time for requests
-	 * @param {number} options.requests how many request in given timeout
-	 * @param {string='new'|'old'} options.method method we use for inventory
+	 * @param {string} options.steamID When passed with cookies,
+	 * 	you don't have to rely on rate limit, steam lets you request your inventory freely
+	 * @param {number} options.minTime @see https://github.com/SGrondin/bottleneck#constructor
+	 * @param {number} options.maxConcurent @see https://github.com/SGrondin/bottleneck#constructor
+	 * @param {number} options.reservoir @see https://github.com/SGrondin/bottleneck#constructor
+	 * @param {number} options.reservoirRefreshAmount @see https://github.com/SGrondin/bottleneck#constructor
+	 * @param {number} options.reservoirRefreshInverval @see https://github.com/SGrondin/bottleneck#constructor
+	 * @param {'new'|'old'} options.method method we use for inventory
 	 * @param {Function} options.formatter method that formats the inventory
+	 * @param {Object} [headers]
 	 */
 	constructor(options = {}) {
-		const { steamID, timeout, requests, method = 'new', formatter } = options;
+		const {
+			steamID, method = 'new', formatter, headers, cookies,
+			minTime = 3, maxConcurent = SECOND_IN_MILISECONDS,
+			// Afaik API allows 100,000 requests per day
+			reservoir = 100000, reservoirRefreshAmount = DAY_IN_MILISECONDS,
+			reservoirRefreshInverval = 100000,
+		} = options;
 
 		this.steamID = steamID;
-		this.timeout = timeout;
-		this.requests = requests;
 		this.method = method;
 		this.formatter = formatter;
 
-		this.request = axios.defaults({
+		this.cookies = cookies;
 
+		this.request = axios.create({
+			headers,
+		});
+
+		this.limiter = new Bottleneck({
+			maxConcurent,
+			minTime,
+			reservoir,
+			reservoirRefreshInverval,
+			reservoirRefreshAmount,
 		});
 	}
 
-	get({ steamID, appid, contextid }) {
-		const method = chooseMethod(this.method);
+	/**
+	 * A shorthand function used for requesting and limiting.
+	 * @param {Object} options @see Inventory.prototype.getViaOldEndpoint
+	 * 	@see Inventory.prototype.getViaNewEndpoint
+	 */
+	get(options) {
+		const method = this.chooseMethod();
 
-		// Bottleneck usage
-		// 
+		/**
+		 * Our SteamID is not rate limited when loggedIn.
+		 */
+		if (!isRateLimited(this, options.steamID)) {
+			return method(options);
+		}
+
+		return this.limiter.schedule(() => method(options));
+	}
+
+	/**
+	 * Chooses method and binds it.
+	 */
+	chooseMethod() {
+		if (this.method === 'old') {
+			return Inventory.prototype.getViaOldEndpoint.bind(this);
+		}
+
+		return Inventory.prototype.getViaNewEndpoint.bind(this);
 	}
 
 	/**
@@ -48,7 +97,7 @@ class Inventory {
 	getViaOldEndpoint({ steamID, appID, contextID, start = 0, tradableOnly = true, inventory = [] }) {
 		const url = `https://steamcommunity.com/profiles/${steamID}/inventory/json/${appID}/${contextID}/`;
 
-		return axios
+		return this.request
 			.get(
 				url,
 				{
@@ -56,30 +105,36 @@ class Inventory {
 						start,
 						trading: tradableOnly ? 1 : 0,
 					},
+					transformData: [function (data) {
+						inventory.push(
+							parseResponseToEcon({
+								assets: data.rgInventory,
+								descriptions: data.rgDescriptions,
+							}),
+						);
+
+						// For recursion
+						return { more: data.more, moreStart: data.more_start };
+					}],
 				},
 			)
 			.then(({ data }) => {
-				inventory.push(
-					parseResponseToEcon({
-						assets: data.rgInventory,
-						descriptions: data.rgDescriptions,
-					}),
-				);
-	
-				const { more } = data;
-				const moreStart = data.more_start;
-	
+				const { more, moreStart } = data;
+
 				if (more) {
-					return this.getViaOldEndpoint({
-						steamID,
-						appID,
-						contextID,
-						start: moreStart,
-						tradableOnly,
-						inventory,
-					});
+					// `priority` is now higher so recursive function is prefered.
+					return this.limiter.schedule({ priority: 4 }, () => this.getViaOldEndpoint(
+						{
+							steamID,
+							appID,
+							contextID,
+							start: moreStart,
+							tradableOnly,
+							inventory,
+						},
+					));
 				}
-	
+
 				return inventory;
 			});
 	}
@@ -95,7 +150,7 @@ class Inventory {
 	getViaNewEndpoint({ steamID, appID, contextID, language = 'english' }) {
 		const url = `https://steamcommunity.com/inventory/${steamID}/${appID}/${contextID}?l=english`;
 
-		return axios
+		return this.request
 			.get(
 				url,
 				{

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "axios": "^0.19.2",
-    "bottleneck": "^2.19.5"
+    "bottleneck": "^2.19.5",
+    "universal-cookie": "^4.0.3"
   }
 }
