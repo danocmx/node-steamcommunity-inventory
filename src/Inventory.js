@@ -73,14 +73,17 @@ class Inventory {
 	get(options) {
 		const method = this.chooseMethod();
 
+		const opts = { ...options };
+		if (!opts.steamID) opts.steamID = this.steamID;
+
 		/**
 		 * Our SteamID is not rate limited when loggedIn.
 		 */
-		if (!isRateLimited(this, options.steamID)) {
+		if (!isRateLimited(this, opts.steamID)) {
 			return method(options);
 		}
 
-		return this.limiter.schedule(() => method(options));
+		return this.limiter.schedule(() => method(opts));
 	}
 
 	/**

@@ -23,11 +23,10 @@ describe('Instance', () => {
 
 describe('New Method', () => {
 	it('request', () => {
-		const inventory = new Inventory();
+		const inventory = new Inventory({ steamID: '76561198144346135' });
 
 		return inventory
 			.get({
-				steamID: '76561198144346135',
 				appID: 440,
 				contextID: 2,
 			})
