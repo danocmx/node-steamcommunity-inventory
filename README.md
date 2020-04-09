@@ -1,14 +1,10 @@
 # steamcommunity-inventory
 A rate limit and response handler for steamcommunity inventories.
+- It's functional.
+- Definitely has bugs in it.
+- Will appreciate all feedback I can get
 
-# V1.0.0
-It's functional, it has bugs in it. Will appreciate all feedback I can get.
-
-# Plans
-Current [TODO](https://github.com/danocmx/node-steamcommunity-inventory/projects/1) list.
-Includes what I want to add in near future and also includes issues so you can suggest stuff.
-
-# DOCS
+# Documentation
 <a name="Inventory"></a>
 ## Vocabulary
 | Param | Type | Descriptions |
@@ -23,21 +19,21 @@ Handles inventory requests to SteamCommunity.
 **Kind**: global class
 
 * [Inventory](#Inventory)
-    * [new Inventory([headers])](#new_Inventory_new)
+    * [new Inventory([options])](#new_Inventory_new)
     * [.setCookies(cookies)](#Inventory+setCookies)
     * [.get(options)](#Inventory+get)
 
 <a name="new_Inventory_new"></a>
 
-### new Inventory([headers])
+### new Inventory([options])
 
 | Param | Type | Description |
 | --- | --- | --- |
 | options.steamID | <code>string</code> | When passed with cookies,     you don't have to rely on rate limit, steam lets you request your inventory freely |
 | options.method | <code>&#x27;new&#x27;</code> \| <code>&#x27;old&#x27;</code> | method we use for inventory |
 | options.formatter | <code>function</code> | modifies econItem before being passed into then |
-| [headers] | <code>Object</code> | HTTP headers |
-| **For Rate limiting see**: https://github.com/SGrondin/bottleneck#constructor  |
+| [options.headers] | <code>Object</code> | HTTP headers |
+| **For Rate limiting see**: | | https://github.com/SGrondin/bottleneck#constructor |
 | options.minTime | <code>number</code> |  |
 | options.maxConcurent | <code>number</code> |  |
 | options.reservoir | <code>number</code> |  |
@@ -59,7 +55,7 @@ NOTE: Current version only accepts cookies in for like
 
 <a name="Inventory+get"></a>
 
-### inventory.get(options)
+### inventory.get(options )⇒ <code>Promise.&lt;Array.&lt;EconItem&gt;&gt;</code>
 A shorthand function used for requesting and limiting.
 
 **Kind**: instance method of [<code>Inventory</code>](#Inventory)
@@ -69,10 +65,14 @@ A shorthand function used for requesting and limiting.
 | --- | --- | --- |
 | options | <code>Object</code> | See [old]() or [new]() |
 
+## Methods
+Please note that you should only use `inventory.get` for inventory.
+These methods are not usable on their own.
+
 <a name="Inventory+getViaOldEndpoint"></a>
 
-### inventory.getViaOldEndpoint(steamID, appID, contextID, [start], [tradableOnly], [inventory]) ⇒ <code>Promise.&lt;Array.&lt;EconItem&gt;&gt;</code>
-Gets inventory from old deprecated endpoint that has more data.
+### NEW: inventory.getViaOldEndpoint(steamID, appID, contextID, [start], [tradableOnly], [inventory])
+Gets inventory from old deprecated endpoint that has more data but is more limited.
 
 **Kind**: instance method of [<code>Inventory</code>](#Inventory)
 
@@ -87,7 +87,7 @@ Gets inventory from old deprecated endpoint that has more data.
 
 <a name="Inventory+getViaNewEndpoint"></a>
 
-### inventory.getViaNewEndpoint(steamID, appID, contextID, [language]) ⇒ <code>Promise.&lt;Array.&lt;EconItem&gt;&gt;</code>
+### OLD: inventory.getViaNewEndpoint(steamID, appID, contextID, [language])
 Gets inventory from new endpoint that has better rate limit but less data.
 
 **Kind**: instance method of [<code>Inventory</code>](#Inventory)

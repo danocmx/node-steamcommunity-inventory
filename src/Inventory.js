@@ -16,6 +16,7 @@ const SECOND_IN_MILISECONDS = 1000;
  */
 class Inventory {
 	/**
+	 * @param {Object} options
 	 * @param {string} options.steamID When passed with cookies,
 	 * 	you don't have to rely on rate limit, steam lets you request your inventory freely
 	 * @param {number} options.minTime @see https://github.com/SGrondin/bottleneck#constructor
@@ -25,7 +26,7 @@ class Inventory {
 	 * @param {number} options.reservoirRefreshInverval @see https://github.com/SGrondin/bottleneck#constructor
 	 * @param {'new'|'old'} options.method method we use for inventory
 	 * @param {Function} options.formatter modifies econItem before being passed into then
-	 * @param {Object} [headers]
+	 * @param {Object} [options.headers]
 	 */
 	constructor(options = {}) {
 		const {
