@@ -66,7 +66,7 @@ A shorthand function used for requesting and limiting.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| options | <code>Object</code> | See [old]() or [new]() |
+| options | <code>Object</code> | See [old](https://github.com/danocmx/node-steamcommunity-inventory#old-inventorygetviaoldendpointsteamid-appid-contextid-start-tradableonly-inventory) or [new](https://github.com/danocmx/node-steamcommunity-inventory#new-inventorygetvianewendpointsteamid-appid-contextid-language) |
 
 ## Methods
 Please note that you should only use `inventory.get` for inventory.
