@@ -4,6 +4,9 @@ A rate limit and response handler for steamcommunity inventories.
 - Definitely has bugs in it.
 - Will appreciate all feedback I can get
 
+# Instalation
+Currently only via NPM: `npm install steamcommunity-inventory`
+
 # Documentation
 <a name="Inventory"></a>
 ## Vocabulary
@@ -55,7 +58,7 @@ NOTE: Current version only accepts cookies in for like
 
 <a name="Inventory+get"></a>
 
-### inventory.get(options )⇒ <code>Promise.&lt;Array.&lt;EconItem&gt;&gt;</code>
+### inventory.get(options) ⇒ <code>Promise.&lt;Array.&lt;EconItem&gt;&gt;</code>
 A shorthand function used for requesting and limiting.
 
 **Kind**: instance method of [<code>Inventory</code>](#Inventory)
@@ -71,7 +74,7 @@ These methods are not usable on their own.
 
 <a name="Inventory+getViaOldEndpoint"></a>
 
-### NEW: inventory.getViaOldEndpoint(steamID, appID, contextID, [start], [tradableOnly], [inventory])
+### OLD: inventory.getViaOldEndpoint(steamID, appID, contextID, [start], [tradableOnly], [inventory])
 Gets inventory from old deprecated endpoint that has more data but is more limited.
 
 **Kind**: instance method of [<code>Inventory</code>](#Inventory)
@@ -87,7 +90,7 @@ Gets inventory from old deprecated endpoint that has more data but is more limit
 
 <a name="Inventory+getViaNewEndpoint"></a>
 
-### OLD: inventory.getViaNewEndpoint(steamID, appID, contextID, [language])
+### NEW: inventory.getViaNewEndpoint(steamID, appID, contextID, [language])
 Gets inventory from new endpoint that has better rate limit but less data.
 
 **Kind**: instance method of [<code>Inventory</code>](#Inventory)
