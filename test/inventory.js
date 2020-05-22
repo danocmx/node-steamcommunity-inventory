@@ -1,5 +1,5 @@
+/* eslint-disable */
 const { assert } = require('chai');
-const { it, describe } = require('mocha');
 
 const Inventory = require('../src/Inventory');
 
@@ -32,6 +32,7 @@ describe('New Method', () => {
 			})
 			.then((results) => {
 				assert.isArray(results, 'Inventory is not an array.');
+				assert.isNotEmpty(results, 'No items received.');
 			});
 	});
 });
@@ -50,6 +51,7 @@ describe('Old method', () => {
 			})
 			.then((results) => {
 				assert.isArray(results, 'Inventory is not an array.');
+				assert.isNotEmpty(results, 'No items received.');
 			});
 	})
 		.timeout(TEN_SECONDS_IN_MILISECONDS);
