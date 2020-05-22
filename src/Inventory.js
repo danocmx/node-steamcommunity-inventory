@@ -82,7 +82,7 @@ class Inventory {
 		 * Our SteamID is not rate limited when loggedIn.
 		 */
 		if (!isRateLimited(this, opts.steamID)) {
-			return method(options);
+			return method(opts);
 		}
 
 		return this.limiter.schedule(() => method(opts));
