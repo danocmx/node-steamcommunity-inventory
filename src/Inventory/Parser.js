@@ -33,7 +33,7 @@ class Parser {
 	toEcon({ assets, descriptions }) {
 		const inventory = [];
 
-		for (let i = 0; i < assets.length.length; i++) {
+		for (let i = 0; i < assets.length; i++) {
 			const asset = assets[i];
 
 			const classID = asset.classid;
