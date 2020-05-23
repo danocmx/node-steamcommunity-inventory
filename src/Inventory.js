@@ -181,6 +181,12 @@ class Inventory {
 				},
 			)
 			.then(({ data }) => {
+				if (data.error) {
+					return Promise.reject(
+						new Error(`Unsuccessful request, ${data.error}`),
+					);
+				}
+
 				if (data.success !== 1) {
 					return Promise.reject(
 						new Error(`Unsuccessful request, ${data.message}`),
