@@ -4,12 +4,12 @@ const Bottleneck = require('bottleneck');
 const Parser = require('./Inventory/Parser');
 
 const isRateLimited = require('./Inventory/isRateLimited');
+const getDesiredMoreAmount = require('./Inventory/getDesiredMoreAmount');
+const fetchMore = require('./Inventory/fetchMore');
+const getNextCount = require('./Inventory/getNextCount');
 
-/**
- * @constant
- */
-const DAY_IN_MILISECONDS = 24 * 60 * 60 * 1000;
-const SECOND_IN_MILISECONDS = 1000;
+const DAY = 24 * 60 * 60 * 1000;
+const SECOND = 1000;
 
 /**
  * Handles inventory requests to SteamCommunity.
@@ -31,9 +31,9 @@ class Inventory {
 	constructor(options = {}) {
 		const {
 			steamID, method = 'new', formatter, headers, cookies,
-			minTime = 3, maxConcurent = SECOND_IN_MILISECONDS,
+			minTime = 3, maxConcurent = SECOND,
 			// Afaik API allows 100,000 requests per day
-			reservoir = 100000, reservoirRefreshAmount = DAY_IN_MILISECONDS,
+			reservoir = 100000, reservoirRefreshAmount = DAY,
 			reservoirRefreshInverval = 100000,
 		} = options;
 
@@ -112,6 +112,7 @@ class Inventory {
 	getViaOldEndpoint({ steamID, appID, contextID, start = 0, tradableOnly = true, inventory = [] }) {
 		const url = `https://steamcommunity.com/profiles/${steamID}/inventory/json/${appID}/${contextID}/`;
 
+		// TODO: implement `count` via start property.
 		return this.request
 			.get(
 				url,
@@ -164,10 +165,21 @@ class Inventory {
 	 * @param {string} steamID
 	 * @param {string} appID
 	 * @param {string} contextID
+	 * @param {string} [start] from which assetID do you want to start
+	 * @param {number} [count=Infinity] If set gets the exact amount of items,
+	 * 	if `Infinity` gets all recursively,
+	 * 	f `void` gets only the first 500
 	 * @param {string} [language=english]
+	 * @param {object[]} [inventory] For recursion.
 	 * @return {Promise<EconItem[]>}
 	 */
-	getViaNewEndpoint({ steamID, appID, contextID, language = 'english' }) {
+	getViaNewEndpoint({ steamID, appID, contextID, start, count = Infinity, language = 'english', inventory = [] }) {
+		const desiredMoreAmount = getDesiredMoreAmount(count);
+		if (desiredMoreAmount) {
+			// eslint-disable-next-line no-param-reassign
+			count = 5000;
+		}
+
 		const url = `https://steamcommunity.com/inventory/${steamID}/${appID}/${contextID}?l=english`;
 
 		return this.request
@@ -176,6 +188,8 @@ class Inventory {
 				{
 					...this.getHeaders(),
 					params: {
+						start,
+						count,
 						l: language,
 					},
 				},
@@ -193,11 +207,38 @@ class Inventory {
 					);
 				}
 
-				return this.parser.toEconNew({
-					assets: data.assets,
-					descriptions: data.descriptions,
-					formatter: this.formatter,
-				});
+				inventory.push(
+					...this.parser.toEconNew({
+						assets: data.assets,
+						descriptions: data.descriptions,
+						formatter: this.formatter,
+					}),
+				);
+
+				if (
+					fetchMore({
+						desiredMoreAmount,
+						currentAmount: inventory.length,
+						moreItems: data.more_items,
+					})
+				) {
+					return this.limiter.schedule({ priority: 4 }, () => this.getViaNewEndpoint({
+						steamID,
+						appID,
+						contextID,
+						language,
+						inventory,
+
+						start: data.last_assetid,
+						count: getNextCount({
+							desiredMoreAmount,
+							currentAmount: inventory.length,
+							totalAmount: data.total_inventory_count,
+						}),
+					}));
+				}
+
+				return inventory;
 			});
 	}
 
