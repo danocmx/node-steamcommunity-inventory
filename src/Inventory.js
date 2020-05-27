@@ -4,12 +4,12 @@ const Bottleneck = require('bottleneck');
 const Parser = require('./Inventory/Parser');
 
 const isRateLimited = require('./Inventory/isRateLimited');
+const getDesiredMoreAmount = require('./Inventory/getDesiredMoreAmount');
+const fetchMore = require('./Inventory/fetchMore');
+const getNextCount = require('./Inventory/getNextCount');
 
-/**
- * @constant
- */
-const DAY_IN_MILISECONDS = 24 * 60 * 60 * 1000;
-const SECOND_IN_MILISECONDS = 1000;
+const DAY = 24 * 60 * 60 * 1000;
+const SECOND = 1000;
 
 /**
  * Handles inventory requests to SteamCommunity.
@@ -31,9 +31,9 @@ class Inventory {
 	constructor(options = {}) {
 		const {
 			steamID, method = 'new', formatter, headers, cookies,
-			minTime = 3, maxConcurent = SECOND_IN_MILISECONDS,
+			minTime = 3, maxConcurent = SECOND,
 			// Afaik API allows 100,000 requests per day
-			reservoir = 100000, reservoirRefreshAmount = DAY_IN_MILISECONDS,
+			reservoir = 100000, reservoirRefreshAmount = DAY,
 			reservoirRefreshInverval = 100000,
 		} = options;
 
@@ -100,16 +100,23 @@ class Inventory {
 	}
 
 	/**
-	 * Gets inventory from old deprecated endpoint that has more data.
+	 * Gets inventory from old deprecated endpoint that has more data from the app server.
+	 * 	Please note that this method should be used and is only here for the extra data.
+	 * 	It inacurately gets items from the server and has a low request limit (around 4 per minute).
 	 * @param {string} steamID
 	 * @param {string} appID
 	 * @param {string} contextID
 	 * @param {number} [start] From which item do we start.
+	 * @param {number} [count=Infinity] How many items you want,
+	 * 	Every request gets roughly 2000 items, so count should be multiple of 2000, can also be:
+	 * 	`Infinity` gets all recursively,
+	 * 	`void` gets only the first 500
 	 * @param {boolean} [tradableOnly=true]
 	 * @param {Object[]} [inventory=[]] Only if you wanna append more items to it. Used for recursive.
 	 * @return {Promise<EconItem[]>}
 	 */
-	getViaOldEndpoint({ steamID, appID, contextID, start = 0, tradableOnly = true, inventory = [] }) {
+	getViaOldEndpoint({ steamID, appID, contextID, start = 0,
+		count = Infinity, tradableOnly = true, inventory = [] }) {
 		const url = `https://steamcommunity.com/profiles/${steamID}/inventory/json/${appID}/${contextID}/`;
 
 		return this.request
@@ -141,12 +148,18 @@ class Inventory {
 				const { more } = data;
 				const moreStart = data.more_start;
 
-				if (more) {
+				// We can determine if we can fetch more.
+				if (fetchMore({
+					desiredMoreAmount: count,
+					currentAmount: inventory.length,
+					moreItems: more,
+				})) {
 					// `priority` is now higher so recursive function is prefered.
 					return this.limiter.schedule({ priority: 4 }, () => this.getViaOldEndpoint(
 						{
 							steamID,
 							appID,
+							count,
 							contextID,
 							start: moreStart,
 							tradableOnly,
@@ -164,10 +177,21 @@ class Inventory {
 	 * @param {string} steamID
 	 * @param {string} appID
 	 * @param {string} contextID
+	 * @param {string} [start] from which assetID do you want to start
+	 * @param {number} [count=Infinity] If set gets the exact amount of items,
+	 * 	if `Infinity` gets all recursively,
+	 * 	if `void` gets only the first 500
 	 * @param {string} [language=english]
+	 * @param {object[]} [inventory] For recursion.
 	 * @return {Promise<EconItem[]>}
 	 */
-	getViaNewEndpoint({ steamID, appID, contextID, language = 'english' }) {
+	getViaNewEndpoint({ steamID, appID, contextID, start, count = Infinity, language = 'english', inventory = [] }) {
+		const desiredMoreAmount = getDesiredMoreAmount(count);
+		if (desiredMoreAmount) {
+			// eslint-disable-next-line no-param-reassign
+			count = 5000;
+		}
+
 		const url = `https://steamcommunity.com/inventory/${steamID}/${appID}/${contextID}?l=english`;
 
 		return this.request
@@ -176,22 +200,57 @@ class Inventory {
 				{
 					...this.getHeaders(),
 					params: {
+						start,
+						count,
 						l: language,
 					},
 				},
 			)
 			.then(({ data }) => {
+				if (data.error) {
+					return Promise.reject(
+						new Error(`Unsuccessful request, ${data.error}`),
+					);
+				}
+
 				if (data.success !== 1) {
 					return Promise.reject(
 						new Error(`Unsuccessful request, ${data.message}`),
 					);
 				}
 
-				return this.parser.toEconNew({
-					assets: data.assets,
-					descriptions: data.descriptions,
-					formatter: this.formatter,
-				});
+				inventory.push(
+					...this.parser.toEconNew({
+						assets: data.assets,
+						descriptions: data.descriptions,
+						formatter: this.formatter,
+					}),
+				);
+
+				if (
+					fetchMore({
+						desiredMoreAmount,
+						currentAmount: inventory.length,
+						moreItems: data.more_items,
+					})
+				) {
+					return this.limiter.schedule({ priority: 4 }, () => this.getViaNewEndpoint({
+						steamID,
+						appID,
+						contextID,
+						language,
+						inventory,
+
+						start: data.last_assetid,
+						count: getNextCount({
+							desiredMoreAmount,
+							currentAmount: inventory.length,
+							totalAmount: data.total_inventory_count,
+						}),
+					}));
+				}
+
+				return inventory;
 			});
 	}
 
