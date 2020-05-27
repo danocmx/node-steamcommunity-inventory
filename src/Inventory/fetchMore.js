@@ -8,17 +8,9 @@ module.exports = function ({ desiredMoreAmount, currentAmount, moreItems }) {
 		return false;
 	}
 
-	// Transfer
 	if (desiredMoreAmount <= currentAmount) {
 		return false;
 	}
 
 	return true;
 };
-
-/*
-> f({ desiredMoreAmount: 12500, currentAmount: 5000, moreItems: 1 })
-true
-> f({ desiredMoreAmount: 7500, currentAmount: 10000, moreItems: 1 })
-false
-*/
