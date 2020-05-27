@@ -1,7 +1,6 @@
 # steamcommunity-inventory
 A rate limit and response handler for steamcommunity inventories.
 - It's functional.
-- Definitely has bugs in it.
 - Will appreciate all feedback I can get
 
 # Instalation
@@ -84,9 +83,10 @@ Gets inventory from old deprecated endpoint that has more data but is more limit
 | steamID | <code>string</code> |  |  |
 | appID | <code>string</code> |  |  |
 | contextID | <code>string</code> |  |  |
+| count | <code>number</code> | How many items you want, Every request gets roughly 2000 items, so count should be multiple of 2000, can also be: `Infinity` gets all recursively, `void` gets only the first 500
 | [start] | <code>number</code> |  | From which item do we start. |
 | [tradableOnly] | <code>boolean</code> | <code>true</code> |  |
-| [inventory] | <code>Array.&lt;Object&gt;</code> | <code>[]</code> | Only if you wanna append more items to it. Used for recursive. |
+| [inventory] | <code>Array.&lt;Object&gt;</code> | <code>[]</code> | Only if you wanna append more items to it. Used for recursion. |
 
 <a name="Inventory+getViaNewEndpoint"></a>
 
@@ -101,3 +101,6 @@ Gets inventory from new endpoint that has better rate limit but less data.
 | appID | <code>string</code> |  |
 | contextID | <code>string</code> |  |
 | [language] | <code>string</code> | <code>&quot;english&quot;</code> |
+| [start] | <code>string</code> | assetID you want to start from.
+| [count] | <code>number</code> | If set gets the exact amount of items, if `Infinity` gets all recursively, if `void` gets only the first 500
+| [inventory] | <code>Array.&lt;Object&gt;</code> | <code>[]</code> | Only if you wanna append more items to it. Used for recursion. |
