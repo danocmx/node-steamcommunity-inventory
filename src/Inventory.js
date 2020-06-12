@@ -194,6 +194,9 @@ class Inventory {
 
 		const url = `https://steamcommunity.com/inventory/${steamID}/${appID}/${contextID}?l=english`;
 
+		// TODO: parse for EResult errors.
+		// Error: "EYldRefreshAppIfNecessary failed with EResult 20"
+
 		return this.request
 			.get(
 				url,
@@ -217,6 +220,10 @@ class Inventory {
 					return Promise.reject(
 						new Error(`Unsuccessful request, ${data.message}`),
 					);
+				}
+
+				if (data.total_inventory_count < 1) {
+					return inventory;
 				}
 
 				inventory.push(

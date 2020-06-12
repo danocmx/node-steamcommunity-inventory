@@ -20,7 +20,7 @@ describe('New Method', () => {
 				assert.isBelow(results.length, 501, 'Received more items in one page request.');
 			})
 
-	})
+	}).timeout(TEN_SECONDS)
 
 	it('One page inventory', () => {
 		const inventory = new Inventory({ steamID: '76561198144346135' });
