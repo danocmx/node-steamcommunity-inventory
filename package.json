@@ -5,7 +5,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "mocha"
+    "test": "npx mocha",
+    "build": "npx tsc"
   },
   "keywords": [
     "steam",
