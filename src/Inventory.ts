@@ -1,11 +1,11 @@
 import axios, { AxiosInstance } from 'axios';
 import Bottleneck from 'bottleneck';
 
-import Parser from './Inventory/Parser';
-import isRateLimited from './Inventory/isRateLimited';
-import getDesiredMoreAmount from './Inventory/getDesiredMoreAmount';
-import fetchMore from './Inventory/fetchMore';
-import getNextCount from './Inventory/getNextCount';
+import { Parser } from './Inventory/Parser';
+import { isRateLimited } from './Inventory/isRateLimited';
+import { getDesiredMoreAmount } from './Inventory/getDesiredMoreAmount';
+import { fetchMore } from './Inventory/fetchMore';
+import { getNextCount } from './Inventory/getNextCount';
 
 import { EconItem } from './Inventory/types';
 
@@ -50,7 +50,7 @@ export type OldMethodParams<T> = {
 /**
  * Handles inventory requests to SteamCommunity.
  */
-class Inventory<TItem = EconItem> {
+export class Inventory<TItem = EconItem> {
 	public cookies?: string;
 	public steamID?: string;
 	public formatter?: Formatter<TItem>;
@@ -318,5 +318,3 @@ class Inventory<TItem = EconItem> {
 		};
 	}
 }
-
-export default Inventory;

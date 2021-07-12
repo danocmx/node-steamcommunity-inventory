@@ -9,7 +9,7 @@ export type GetNextCountParams = {
  *
  * @return {number}
  */
-export default function getNextCount({ desiredMoreAmount, currentAmount, totalAmount }: GetNextCountParams): number {
+export function getNextCount({ desiredMoreAmount, currentAmount, totalAmount }: GetNextCountParams): number {
 	const howMuchMore = desiredMoreAmount - currentAmount;
 	const howMuchLeft = totalAmount - currentAmount;
 

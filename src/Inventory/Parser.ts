@@ -1,4 +1,4 @@
-import Inventory from '../Inventory';
+import { Inventory } from '../Inventory';
 import { EconItem, Asset, Description } from './types';
 
 export type ToEconNewParams = {
@@ -16,7 +16,7 @@ export type ToEconParams = {
 	descriptions: Record<string, Description>;
 }
 
-class Parser<T> {
+export class Parser<T> {
 	private inventory: Inventory<T>;
 
 	constructor(inventory: Inventory<T>) {
@@ -78,5 +78,3 @@ class Parser<T> {
 		return this.inventory.formatter ? this.inventory.formatter(econItem) : econItem as unknown as T;
 	}
 }
-
-export default Parser;
