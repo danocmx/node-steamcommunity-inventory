@@ -37,16 +37,16 @@ export type EconItem = {
   fraudwarnings?: string[];
   pos: number;
 
-  icon_url?: string;
-  icon_url_large?: string;
+  icon_url: string;
+  icon_url_large: string;
   amount?: string;
   currency?: number;
-  actions?: EconAction[];
+  actions: EconAction[];
   market_actions?: EconAction[];
-  background_color?: string;
-  name_color?: string;
-  market_tradable_restriction?: number;
-  market_marketable_restriction?: number;
+  background_color: string;
+  name_color: string;
+  market_tradable_restriction: number;
+  market_marketable_restriction: number;
   cache_expiration?: string;
 };
 
