@@ -28,12 +28,17 @@ export type EconItem = {
   tags: EconTag[];
   app_data?: { def_index: number };
 
+  id: string;
+  appid: number;
+  contextid: string;
+  instanceid: string;
+  classid: string;
+
+  fraudwarnings?: string[];
+  pos: number;
+
   icon_url?: string;
   icon_url_large?: string;
-  appid?: number;
-  contextid?: string;
-  instanceid?: string;
-  classid?: string;
   amount?: string;
   currency?: number;
   actions?: EconAction[];
