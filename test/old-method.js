@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const Inventory = require('../src/Inventory');
+const Inventory = require('../dist/Inventory').default;
 
 const TEN_SECONDS = 10 * 1000;
 const THIRTY_SECONDS = TEN_SECONDS * 3;

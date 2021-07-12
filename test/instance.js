@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const Inventory = require('../src/Inventory');
+const Inventory = require('../dist/Inventory').default;
 
 describe('Instance', () => {
 	it('create', () => {
