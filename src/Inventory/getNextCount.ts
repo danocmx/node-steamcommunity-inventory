@@ -1,9 +1,15 @@
+export type GetNextCountParams = {
+	desiredMoreAmount: number;
+	currentAmount: number;
+	totalAmount: number;
+}
+
 /**
  * Gets count for next request via new method.
  *
  * @return {number}
  */
-module.exports = function ({ desiredMoreAmount, currentAmount, totalAmount }) {
+export default function getNextCount({ desiredMoreAmount, currentAmount, totalAmount }: GetNextCountParams): number {
 	const howMuchMore = desiredMoreAmount - currentAmount;
 	const howMuchLeft = totalAmount - currentAmount;
 

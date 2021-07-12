@@ -1,20 +1,65 @@
-const axios = require('axios');
-const Bottleneck = require('bottleneck');
+import axios, { AxiosInstance } from 'axios';
+import Bottleneck from 'bottleneck';
 
-const Parser = require('./Inventory/Parser');
+import Parser from './Inventory/Parser';
+import isRateLimited from './Inventory/isRateLimited';
+import getDesiredMoreAmount from './Inventory/getDesiredMoreAmount';
+import fetchMore from './Inventory/fetchMore';
+import getNextCount from './Inventory/getNextCount';
 
-const isRateLimited = require('./Inventory/isRateLimited');
-const getDesiredMoreAmount = require('./Inventory/getDesiredMoreAmount');
-const fetchMore = require('./Inventory/fetchMore');
-const getNextCount = require('./Inventory/getNextCount');
+import { EconItem } from './Inventory/types';
 
 const DAY = 24 * 60 * 60 * 1000;
 const SECOND = 1000;
 
+export type InventoryOptions<T> = {
+	steamID?: string;
+	method?: 'new' | 'old';
+	formatter?: Formatter<T>;
+	headers?: Record<string, string>;
+	cookies?: string[];
+	minTime?: number;
+	maxConcurent?: number;
+	reservoir?: number;
+	reservoirRefreshAmount?: number;
+	reservoirRefreshInverval?: number;
+}
+
+export type Formatter<T> = (econ: EconItem) => T;
+
+export type NewMethodParams<T> = {
+	steamID: string;
+	appID: string;
+	contextID: string;
+	start?: number;
+	count?: number;
+	language?: string;
+	inventory?: T[];
+}
+
+export type OldMethodParams<T> = {
+	steamID: string;
+	appID: string;
+	contextID: string;
+	start?: number;
+	count?: number;
+	tradableOnly?: boolean;
+	inventory?: T[];
+}
+
 /**
  * Handles inventory requests to SteamCommunity.
  */
-class Inventory {
+class Inventory<TItem = EconItem> {
+	public cookies?: string;
+	public steamID?: string;
+	public formatter?: Formatter<TItem>;
+	public method: string;
+	public parser: Parser<TItem>;
+	public headers?: Record<string, string>;
+	public request: AxiosInstance;
+	public limiter: Bottleneck;
+
 	/**
 	 * @param {Object} options
 	 * @param {string} options.steamID When passed with cookies,
@@ -28,7 +73,7 @@ class Inventory {
 	 * @param {Function} options.formatter modifies econItem before being passed into then
 	 * @param {Object} [options.headers]
 	 */
-	constructor(options = {}) {
+	constructor(options: InventoryOptions<TItem> = {}) {
 		const {
 			steamID, method = 'new', formatter, headers, cookies,
 			minTime = 3, maxConcurent = SECOND,
@@ -58,12 +103,10 @@ class Inventory {
 	}
 
 	/**
-	 * Sets cookies to instance
-	 * NOTE: Current version only accepts cookies in for like
-	 * 	@see https://github.com/DoctorMcKay/node-steam-user#websession
+	 * Sets cookies to instance, in key=value format.
 	 * @param {string[]} cookies
 	 */
-	setCookies(cookies) {
+	setCookies(cookies: string[]) {
 		this.cookies = cookies.join('; ');
 	}
 
@@ -72,16 +115,18 @@ class Inventory {
 	 * @param {Object} options @see Inventory.prototype.getViaOldEndpoint
 	 * 	@see Inventory.prototype.getViaNewEndpoint
 	 */
-	get(options) {
+	get(options: (NewMethodParams<TItem> | OldMethodParams<TItem>) & { steamID?: string }) {
 		const method = this.chooseMethod();
 
-		const opts = { ...options };
-		if (!opts.steamID) opts.steamID = this.steamID;
+		const opts: NewMethodParams<TItem> | OldMethodParams<TItem> = { 
+			...options, 
+			steamID: options.steamID || this.steamID as string,
+		};
 
 		/**
 		 * Our SteamID is not rate limited when loggedIn.
 		 */
-		if (!isRateLimited(this, opts.steamID)) {
+		if (!isRateLimited<TItem>(this, opts.steamID)) {
 			return method(opts);
 		}
 
@@ -91,7 +136,7 @@ class Inventory {
 	/**
 	 * Chooses method and binds it.
 	 */
-	chooseMethod() {
+	private chooseMethod() {
 		if (this.method === 'old') {
 			return Inventory.prototype.getViaOldEndpoint.bind(this);
 		}
@@ -115,8 +160,8 @@ class Inventory {
 	 * @param {Object[]} [inventory=[]] Only if you wanna append more items to it. Used for recursive.
 	 * @return {Promise<EconItem[]>}
 	 */
-	getViaOldEndpoint({ steamID, appID, contextID, start = 0,
-		count = Infinity, tradableOnly = true, inventory = [] }) {
+	private getViaOldEndpoint({ steamID, appID, contextID, start = 0,
+		count = Infinity, tradableOnly = true, inventory = [] }: OldMethodParams<TItem>): Promise<TItem[]> {
 		const url = `https://steamcommunity.com/profiles/${steamID}/inventory/json/${appID}/${contextID}/`;
 
 		return this.request
@@ -141,7 +186,6 @@ class Inventory {
 					...this.parser.toEconOld({
 						assets: data.rgInventory,
 						descriptions: data.rgDescriptions,
-						formatter: this.formatter,
 					}),
 				);
 
@@ -185,7 +229,7 @@ class Inventory {
 	 * @param {object[]} [inventory] For recursion.
 	 * @return {Promise<EconItem[]>}
 	 */
-	getViaNewEndpoint({ steamID, appID, contextID, start, count = Infinity, language = 'english', inventory = [] }) {
+	private getViaNewEndpoint({ steamID, appID, contextID, start, count = Infinity, language = 'english', inventory = [] }: NewMethodParams<TItem>): Promise<TItem[]> {
 		const desiredMoreAmount = getDesiredMoreAmount(count);
 		if (desiredMoreAmount) {
 			// eslint-disable-next-line no-param-reassign
@@ -230,7 +274,6 @@ class Inventory {
 					...this.parser.toEconNew({
 						assets: data.assets,
 						descriptions: data.descriptions,
-						formatter: this.formatter,
 					}),
 				);
 
@@ -265,7 +308,7 @@ class Inventory {
 	 * Returns cookies in object for iterators.
 	 * @return {Object}
 	 */
-	getHeaders() {
+	private getHeaders() {
 		const { headers = {}, cookies } = this;
 
 		return {
@@ -276,4 +319,4 @@ class Inventory {
 	}
 }
 
-module.exports = Inventory;
+export default Inventory;

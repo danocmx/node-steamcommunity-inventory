@@ -2,7 +2,8 @@
   "name": "steamcommunity-inventory",
   "version": "1.2.1",
   "description": "",
-  "main": "./src/Inventory",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "test": "mocha"
   },
@@ -18,10 +19,12 @@
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2",
-    "mocha": "^7.1.1"
+    "mocha": "^7.1.1",
+    "typescript": "^4.3.5"
   },
   "dependencies": {
     "axios": "^0.19.2",
     "bottleneck": "^2.19.5"
-  }
+  },
+  "files": ["dist"]
 }
