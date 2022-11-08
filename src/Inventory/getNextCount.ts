@@ -13,7 +13,7 @@ export function getNextCount({ desiredMoreAmount, currentAmount, totalAmount }: 
 	const howMuchMore = desiredMoreAmount - currentAmount;
 	const howMuchLeft = totalAmount - currentAmount;
 
-	if (howMuchMore <= 5000) return howMuchMore;
+	if (howMuchMore <= 2000) return howMuchMore;
 	if (howMuchLeft > howMuchMore) return desiredMoreAmount;
 
 	return howMuchLeft;

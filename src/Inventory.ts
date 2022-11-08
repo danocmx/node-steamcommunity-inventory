@@ -118,8 +118,8 @@ export class Inventory<TItem = EconItem> {
 	get(options: (NewMethodParams<TItem> | OldMethodParams<TItem>) & { steamID?: string }) {
 		const method = this.chooseMethod();
 
-		const opts: NewMethodParams<TItem> | OldMethodParams<TItem> = { 
-			...options, 
+		const opts: NewMethodParams<TItem> | OldMethodParams<TItem> = {
+			...options,
 			steamID: options.steamID || this.steamID as string,
 		};
 
@@ -233,7 +233,7 @@ export class Inventory<TItem = EconItem> {
 		const desiredMoreAmount = getDesiredMoreAmount(count);
 		if (desiredMoreAmount) {
 			// eslint-disable-next-line no-param-reassign
-			count = 5000;
+			count = 2000;
 		}
 
 		const url = `https://steamcommunity.com/inventory/${steamID}/${appID}/${contextID}?l=english`;
