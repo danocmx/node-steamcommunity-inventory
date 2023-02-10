@@ -6,6 +6,6 @@ const REQUEST_COUNT_THRESHOLD = 2000;
  * @return {number}
  */
 export function getDesiredMoreAmount(count: number): number {
-	if (count > REQUEST_COUNT_THRESHOLD) return count;
-	return 0;
-};
+  if (count > REQUEST_COUNT_THRESHOLD) return count;
+  return 0;
+}

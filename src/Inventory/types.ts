@@ -1,12 +1,12 @@
 export type EconAction = { link: string; name: string };
 
 export type EconTag = {
-  	name?: string;
-  	category: string;
-  	internal_name: string;
-  	localized_category_name?: string;
-  	localized_tag_name?: string;
-	color?: string;
+  name?: string;
+  category: string;
+  internal_name: string;
+  localized_category_name?: string;
+  localized_tag_name?: string;
+  color?: string;
 };
 
 export type EconDescription = {
@@ -57,6 +57,8 @@ export type Asset = {
   amount: string;
   hide_in_china: number;
   pos: number;
+  appid: number;
+  contextid: string;
 };
 
-export type Description = Omit<EconItem, "amount" | "pos" | "hide_in_china">;
+export type Description = Omit<EconItem, 'amount' | 'pos' | 'hide_in_china'>;

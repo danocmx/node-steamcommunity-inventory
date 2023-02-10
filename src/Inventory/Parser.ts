@@ -1,80 +1,44 @@
 import { Inventory } from '../Inventory';
 import { EconItem, Asset, Description } from './types';
 
-export type ToEconNewParams = {
-	assets: Asset[];
-	descriptions: Description[];
-}
-
-export type ToEconOldParams = {
-	assets: Record<string, Asset>;
-	descriptions: Record<string, Description>;
-}
-
 export type ToEconParams = {
-	assets: Asset[];
-	descriptions: Record<string, Description>;
-}
+  assets: Asset[];
+  descriptions: Description[];
+};
 
 export class Parser<T> {
-	private inventory: Inventory<T>;
+  constructor(private inventory: Inventory<T>) {}
 
-	constructor(inventory: Inventory<T>) {
-		this.inventory = inventory;
-	}
+  toEconNew({ assets, descriptions }: ToEconParams) {
+    const descriptionsDict: Record<string, Description> = {};
+    for (let i = 0; i < descriptions.length; i++) {
+      const description = descriptions[i];
+      const classId = description.classid;
+      const instanceId = description.instanceid;
+      descriptionsDict[`${classId}_${instanceId}`] = description;
+    }
 
-	toEconNew({ assets, descriptions }: ToEconNewParams) {
-		/**
-		 * Changing array to object
-		 */
-		const descriptionStore: Record<string, Description> = {};
-		for (let i = 0; i < descriptions.length; i++) {
-			const description: Description = descriptions[i];
+    const inventory: T[] = [];
+    for (let i = 0; i < assets.length; i++) {
+      const asset = assets[i];
+      const classId = asset.classid;
+      const instanceId = asset.instanceid;
+      const description = descriptionsDict[`${classId}_${instanceId}`];
 
-			const classID = description.classid;
-			const instanceID = description.instanceid;
+      inventory.push(
+        this.format({
+          ...asset,
+          ...description,
+        }),
+      );
+    }
 
-			descriptionStore[`${classID}_${instanceID}`] = description;
-		}
+    return inventory;
+  }
 
-		return this.toEcon({
-			assets,
-			descriptions: descriptionStore,
-		});
-	}
-
-	toEconOld({ assets, descriptions }: ToEconOldParams) {
-		return this.toEcon({
-			assets: Object.values(assets),
-			descriptions,
-		});
-	}
-
-	toEcon({ assets, descriptions }: ToEconParams) {
-		const inventory: T[] = [];
-
-		for (let i = 0; i < assets.length; i++) {
-			const asset = assets[i];
-
-			const classID = asset.classid;
-			const instanceID = asset.instanceid;
-
-			const description = descriptions[`${classID}_${instanceID}`];
-
-			inventory.push(
-				this.format(
-					{
-						...asset,
-						...description,
-					},
-				),
-			);
-		}
-
-		return inventory;
-	}
-
-	format(econItem: EconItem): T {
-		return this.inventory.formatter ? this.inventory.formatter(econItem) : econItem as unknown as T;
-	}
+  format(econItem: EconItem): T {
+    return this.inventory.formatter
+      ? this.inventory.formatter(econItem)
+      : (econItem as unknown as T);
+  }
 }
