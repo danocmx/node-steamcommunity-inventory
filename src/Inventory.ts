@@ -155,7 +155,7 @@ export class Inventory<TItem = EconItem> {
       count = 2000;
     }
 
-    const url = `https://steamcommunity.com/inventory/${steamID}/${appID}/${contextID}?l=english`;
+    const url = `https://steamcommunity.com/inventory/${steamID}/${appID}/${contextID}`;
 
     const { data } = await this.sendRequest({
       url,
