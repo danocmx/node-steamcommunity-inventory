@@ -1,4 +1,4 @@
-const REQUEST_COUNT_THRESHOLD = 3000;
+import { REQUEST_COUNT_THRESHOLD } from './constant';
 
 /**
  * Gets `desiredMoreAmount`, it specifies that

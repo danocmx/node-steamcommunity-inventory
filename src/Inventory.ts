@@ -5,6 +5,7 @@ import { Parser } from './Inventory/Parser';
 import { getDesiredMoreAmount } from './Inventory/getDesiredMoreAmount';
 import { fetchMore } from './Inventory/fetchMore';
 import { getNextCount } from './Inventory/getNextCount';
+import { REQUEST_COUNT_THRESHOLD } from './Inventory/constant';
 
 import { EconItem } from './Inventory/types';
 
@@ -152,7 +153,7 @@ export class Inventory<TItem = EconItem> {
   }: FetchInventoryPageParams<TItem>): Promise<TItem[]> {
     const desiredMoreAmount = getDesiredMoreAmount(count);
     if (desiredMoreAmount) {
-      count = 2000;
+      count = REQUEST_COUNT_THRESHOLD;
     }
 
     const url = `https://steamcommunity.com/inventory/${steamID}/${appID}/${contextID}`;

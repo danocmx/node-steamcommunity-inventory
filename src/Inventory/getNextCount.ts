@@ -1,3 +1,5 @@
+import { REQUEST_COUNT_THRESHOLD } from './constant';
+
 export type GetNextCountParams = {
   desiredMoreAmount: number;
   currentAmount: number;
@@ -17,7 +19,7 @@ export function getNextCount({
   const howMuchMore = desiredMoreAmount - currentAmount;
   const howMuchLeft = totalAmount - currentAmount;
 
-  if (howMuchMore <= 2000) return howMuchMore;
+  if (howMuchMore <= REQUEST_COUNT_THRESHOLD) return howMuchMore;
   if (howMuchLeft > howMuchMore) return desiredMoreAmount;
 
   return howMuchLeft;
