@@ -1,4 +1,4 @@
-const REQUEST_COUNT_THRESHOLD = 2000;
+const REQUEST_COUNT_THRESHOLD = 3000;
 
 /**
  * Gets `desiredMoreAmount`, it specifies that
