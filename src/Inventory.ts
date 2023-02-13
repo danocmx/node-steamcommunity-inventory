@@ -161,7 +161,7 @@ export class Inventory<TItem = EconItem> {
     const { data } = await this.sendRequest({
       url,
       settings: {
-        ...this.getHeaders(),
+        headers: this.getHeaders(),
         params: {
           start,
           count,
