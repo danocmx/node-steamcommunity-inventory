@@ -31,7 +31,7 @@ export type GetInventoryParams = {
   steamID: string;
   appID: string;
   contextID: string;
-  start?: number;
+  lastAssetId?: string;
   count?: number;
   language?: string;
 };
@@ -40,10 +40,16 @@ export type FetchInventoryPageParams<T> = {
   steamID: string;
   appID: string;
   contextID: string;
-  start: number;
+  lastAssetId?: string;
   count: number;
   language?: string;
   inventory?: T[];
+};
+
+type SteamCommunityInventoryParams = {
+  count: number;
+  l?: string;
+  start_assetid?: string;
 };
 
 /**
@@ -82,7 +88,7 @@ export class Inventory<TItem = EconItem> {
       reservoir = 100000,
       reservoirRefreshAmount = DAY,
       reservoirRefreshInverval = 100000,
-      axiosInstance = axios.create()
+      axiosInstance = axios.create(),
     } = options;
 
     this.steamID = steamID;
@@ -128,7 +134,7 @@ export class Inventory<TItem = EconItem> {
     steamID,
     appID,
     contextID,
-    start = 0,
+    lastAssetId,
     count = Infinity,
     language = 'english',
   }: GetInventoryParams): Promise<TItem[]> {
@@ -136,7 +142,7 @@ export class Inventory<TItem = EconItem> {
       steamID,
       appID,
       contextID,
-      start,
+      lastAssetId,
       count,
       language,
     });
@@ -146,7 +152,7 @@ export class Inventory<TItem = EconItem> {
     steamID,
     appID,
     contextID,
-    start,
+    lastAssetId,
     count,
     language,
     inventory = [],
@@ -158,12 +164,21 @@ export class Inventory<TItem = EconItem> {
 
     const url = `https://steamcommunity.com/inventory/${steamID}/${appID}/${contextID}`;
 
+    const params: SteamCommunityInventoryParams = {
+      count,
+      l: language
+    };
+
+    if (lastAssetId) {
+      params.start_assetid = lastAssetId;
+    }
+
     const { data } = await this.sendRequest({
       url,
       settings: {
         headers: this.getHeaders(),
         params: {
-          start,
+          start_assetid: lastAssetId,
           count,
           l: language,
         },
@@ -171,11 +186,15 @@ export class Inventory<TItem = EconItem> {
     });
 
     if (data.error) {
-      return Promise.reject(new Error(`Unsuccessful inventory request, ${data.error}`));
+      return Promise.reject(
+        new Error(`Unsuccessful inventory request, ${data.error}`),
+      );
     }
 
     if (data.success !== 1) {
-      return Promise.reject(new Error(`Unsuccessful inventory request, ${data.message}`));
+      return Promise.reject(
+        new Error(`Unsuccessful inventory request, ${data.message}`),
+      );
     }
 
     if (data.total_inventory_count < 1) {
@@ -203,7 +222,7 @@ export class Inventory<TItem = EconItem> {
         language,
         inventory,
 
-        start: data.last_assetid,
+        lastAssetId: data.last_assetid,
         count: getNextCount({
           desiredMoreAmount,
           currentAmount: inventory.length,
